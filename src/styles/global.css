@@ -1,6 +1,27 @@
 @import 'tailwindcss';
 
 /* ───────────────────────────────────────────────────────────────
+   Registered custom properties.
+
+   JS owns `--angle` and rewrites it every frame. A CSS `transition` on
+   `transform` would therefore fight the rotation and smear it. Registering
+   the hover lift as typed properties instead means CSS can interpolate
+   *these* smoothly while the transform itself recomputes each frame from
+   whatever the current values happen to be — the two never collide.
+   ─────────────────────────────────────────────────────────────── */
+@property --card-pop {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --card-scale {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+/* ───────────────────────────────────────────────────────────────
    Design tokens
    Light is the video-accurate default: pure white, warm-grey type.
    Dark is not an inversion — card art is untouched, but shadows
@@ -13,12 +34,11 @@
   --bg: #ffffff;
   --fg: #3a3a3a;
   --fg-strong: #1c1c1e;
-  --fg-mute: #8b8b90;
+  /* #767676 is the well-known break-even point for 4.5:1 (AA body text) on
+     pure white. --fg-mute is used at small sizes (card labels, panel meta),
+     so it needs the body threshold, not the 3:1 large-text one. */
+  --fg-mute: #767676;
   --accent: #8e43e7;
-
-  /* The hub disc tracks the background. This one line is what makes
-     the arc edge work in both themes with no extra code. */
-  --hub: var(--bg);
 
   --card-shadow:
     0 1px 2px rgb(0 0 0 / 0.04),
@@ -26,12 +46,13 @@
     0 24px 48px rgb(0 0 0 / 0.06);
   --card-rim: transparent;
 
-  /* Arc geometry — measured from the reference clip.
-     R ≈ 1.43 × viewport width, 7.2° per card, cards at 0.645 aspect. */
-  --arc-radius: 143vw;
-  --card-w: 18vw;
+  /* Card proportion, measured from the reference clip. A constant — the
+     only geometry token that belongs here. Everything else lives on .arc,
+     because a derived custom property resolves against the element it is
+     *declared* on: putting `--card-h: calc(var(--card-w) / …)` here would
+     freeze it to this rule's --card-w and silently ignore every responsive
+     override further down the tree. */
   --card-aspect: 0.645;
-  --arc-step: 7.2deg;
 
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
@@ -43,7 +64,7 @@
   --bg: #0a0a0c;
   --fg: #ededf0;
   --fg-strong: #ffffff;
-  --fg-mute: #74747c;
+  --fg-mute: #7a7a7a;
   /* Lifted from #8e43e7 — the source purple doesn't hold contrast on near-black. */
   --accent: #a366f0;
 

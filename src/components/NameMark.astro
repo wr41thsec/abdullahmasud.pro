@@ -17,7 +17,10 @@ const { name } = Astro.props;
 
     font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
     font-weight: 500;
-    font-size: clamp(2.1rem, 6vw, 5.25rem);
+    /* The lower bound matters more than it looks: at 6vw a phone lands on
+       ~22px, which the 2.1rem floor rescued but left visually weak against
+       half-viewport cards. 2.45rem holds the name as the anchor it is. */
+    font-size: clamp(2.45rem, 6vw, 5.25rem);
     line-height: 1.05;
     letter-spacing: -0.015em;
     color: var(--fg-strong);

@@ -1,13 +1,25 @@
 ---
 import Base from '../layouts/Base.astro';
 import NameMark from '../components/NameMark.astro';
+import ArcCarousel from '../components/ArcCarousel.astro';
+import DetailPanel from '../components/DetailPanel.astro';
+import ThemeHint from '../components/ThemeHint.astro';
 ---
 
 <Base
   title="Abdullah Al Masud"
   description="Businesses, products and ideas by Abdullah Al Masud."
 >
-  <main>
-    <NameMark name="Abdullah Al Masud" />
-  </main>
+  <NameMark name="Abdullah Al Masud" />
+  <ArcCarousel />
+  <DetailPanel />
+  <ThemeHint />
 </Base>
+
+<script>
+  import { initTheme } from '../scripts/theme';
+  import { initPanel } from '../scripts/panel';
+
+  initTheme();
+  initPanel();
+</script>

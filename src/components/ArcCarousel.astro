@@ -1,0 +1,137 @@
+---
+import Card from './Card.astro';
+import { cards } from '../content/cards';
+---
+
+<div class="arc" data-arc>
+  <div class="arc__ring" data-ring>
+    {cards.map((card, i) => <Card card={card} index={i} />)}
+  </div>
+</div>
+
+<style>
+  .arc {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    /* The ring is far wider than the viewport; this is what trims it. */
+    overflow: hidden;
+
+    /* ─── Arc geometry ────────────────────────────────────────
+       All of it declared here, on the element the media queries below
+       override, so `--card-h` re-derives per breakpoint.
+
+       The radius is not a free parameter. For cards to sit edge-to-edge
+       on the ring, arc length per step must equal card width:
+
+           R × (7.2° in radians) = card-w
+           R = card-w / 0.12566 = card-w × 7.958
+
+       That relationship is why the reference measures 18vw cards against a
+       143vw radius (18 × 7.958 = 143.2). Change --card-w and --arc-radius
+       must move with it, or the cards will overlap or gap.
+
+       A useful consequence: the number of cards visible at once is very
+       close to 1 / (card-w as a fraction of viewport width). 18vw → ~5.6
+       cards, which is what the reference shows. */
+    --card-w: 18vw;
+    --arc-radius: 143vw;
+    --card-h: calc(var(--card-w) / var(--card-aspect));
+    --card-radius: 1.25vw;
+
+    /* Vertical position of the card centres, as a share of viewport height.
+       The ring centre is this plus the radius, far below the fold. */
+    --arc-y: 51%;
+  }
+
+  .arc__ring {
+    position: absolute;
+    left: 50%;
+
+    /* The ring's centre. Card centres sit at --arc-y of viewport height, so
+       the centre is that plus the radius — thousands of pixels below the
+       fold. Every card hangs off this single origin point. */
+    top: calc(var(--arc-y) + var(--arc-radius));
+
+    width: 0;
+    height: 0;
+  }
+
+  /* ─── Responsive geometry ───────────────────────────────────
+     Each breakpoint picks a card width, then derives the radius from it
+     with the × 7.958 rule above. Wider cards mean fewer visible, so this
+     is really a choice about how many cards a given screen should show. */
+
+  /* Tablet — 26vw ≈ 3.8 cards visible. */
+  @media (max-width: 1279px) {
+    .arc {
+      --card-w: 26vw;
+      --arc-radius: 207vw;
+      --card-radius: 1.8vw;
+      --arc-y: 52%;
+    }
+  }
+
+  /* Phone.
+     Visible count is ~1/f, so three cards demands f ≤ 0.34 — and at 34vw the
+     reference 0.645 aspect gives a 255px-wide, 165px-tall card that reads as
+     a postage stamp on an 812px screen. Two 50vw cards fill the height but
+     flatten the radius so far that the fan disappears and it becomes two
+     upright rectangles.
+     Neither is the answer. The aspect is what gives, not the count: a
+     narrower, taller card keeps three on screen with a legible tilt AND
+     enough height to have presence. This is the one place the design departs
+     from the reference's proportions, because the reference is a 16:9
+     composition and a phone is not. */
+  @media (max-width: 767px) {
+    .arc {
+      --card-w: 34vw;
+      --arc-radius: 271vw;
+      --card-aspect: 0.5;
+      --card-radius: 3.4vw;
+      --arc-y: 50%;
+    }
+  }
+
+  /* Short landscape windows — the arc would otherwise push the cards
+     straight off the bottom. */
+  @media (max-height: 560px) and (min-width: 768px) {
+    .arc {
+      --card-w: 15vw;
+      --arc-radius: 119vw;
+      --arc-y: 56%;
+    }
+  }
+</style>
+
+<script>
+  import { initArc } from '../scripts/arc';
+  import { ARC_STEP, SECONDS_PER_CARD } from '../content/cards';
+
+  const ring = document.querySelector<HTMLElement>('[data-ring]');
+
+  if (ring) {
+    const engine = initArc(ring, {
+      step: ARC_STEP,
+      secondsPerCard: SECONDS_PER_CARD,
+    });
+
+    // Expose for the panel, which needs to hold the ring still while open.
+    window.__arc = engine;
+
+    // Arrow keys move the ring by whole cards. This is the only navigation
+    // for anyone on `prefers-reduced-motion`, where the drift is switched
+    // off entirely — without it that visitor sees six cards and no way to
+    // reach the other four.
+    document.addEventListener('keydown', (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key === 'ArrowRight') {
+        engine.nudge(1);
+        event.preventDefault();
+      } else if (event.key === 'ArrowLeft') {
+        engine.nudge(-1);
+        event.preventDefault();
+      }
+    });
+  }
+</script>

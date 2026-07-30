@@ -1,0 +1,377 @@
+---
+import { cards } from '../content/cards';
+---
+
+<div class="panel" data-panel hidden>
+  <div class="panel__backdrop" data-panel-backdrop></div>
+
+  <div
+    class="panel__dialog"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="panel-title"
+    data-panel-dialog
+  >
+    <button class="panel__close" type="button" data-panel-close aria-label="Close">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.6" fill="none" />
+      </svg>
+    </button>
+
+    <div class="panel__body">
+      {
+        cards.map((card) => (
+          <section class="panel__content" data-panel-for={card.id} hidden>
+            {/* Carries the card's own tint into the panel, so the connection
+                between what was clicked and what opened is explicit. Inline
+                style rather than a JS hand-off — no scripting needed. */}
+            <span
+              class="panel__tint"
+              style={`--tint-from: ${card.tint[0]}; --tint-to: ${card.tint[1]};`}
+              aria-hidden="true"></span>
+            <span class="panel__kind">{card.kind}</span>
+            <h2 class="panel__title" data-panel-title-for={card.id}>
+              {card.title}
+            </h2>
+            {card.subtitle && <p class="panel__sub">{card.subtitle}</p>}
+
+            {card.quote && (
+              <blockquote class="panel__quote">
+                <p>{card.quote.text}</p>
+                {card.quote.attribution && <cite>{card.quote.attribution}</cite>}
+              </blockquote>
+            )}
+
+            {card.detail?.body && <p class="panel__text">{card.detail.body}</p>}
+
+            {card.detail?.meta && card.detail.meta.length > 0 && (
+              <dl class="panel__meta">
+                {card.detail.meta.map((m) => (
+                  <div>
+                    <dt>{m.label}</dt>
+                    <dd>{m.value}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+
+            {card.contact && (
+              <div class="panel__contact">
+                <a class="panel__email" href={`mailto:${card.contact.email}`}>
+                  {card.contact.email}
+                </a>
+                <ul class="panel__socials">
+                  {card.contact.socials.map((s) => (
+                    <li>
+                      <a href={s.href} target="_blank" rel="me noopener noreferrer">
+                        <span class="panel__net">{s.label}</span>
+                        <span class="panel__handle">{s.handle}</span>
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {card.detail?.links && card.detail.links.length > 0 && (
+              <ul class="panel__links">
+                {card.detail.links.map((l) => (
+                  <li>
+                    <a href={l.href} target="_blank" rel="noopener noreferrer">
+                      {l.label}
+                      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path
+                          d="M7 17L17 7M17 7H9M17 7v8"
+                          stroke="currentColor"
+                          stroke-width="1.6"
+                          fill="none"
+                        />
+                      </svg>
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        ))
+      }
+    </div>
+  </div>
+</div>
+
+<style>
+  .panel {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+  }
+
+  .panel[hidden] {
+    display: none;
+  }
+
+  .panel__backdrop {
+    position: absolute;
+    inset: 0;
+    background: color-mix(in oklab, var(--bg) 78%, transparent);
+    backdrop-filter: blur(14px) saturate(115%);
+    opacity: 0;
+    transition: opacity 320ms var(--ease-out);
+  }
+
+  .panel[data-open] .panel__backdrop {
+    opacity: 1;
+  }
+
+  .panel__dialog {
+    position: relative;
+    width: min(46rem, calc(100vw - 3rem));
+    max-height: min(80vh, 44rem);
+    padding: clamp(1.75rem, 3.5vw, 3rem);
+
+    background: var(--bg);
+    border-radius: 1rem;
+    outline: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+    box-shadow:
+      0 4px 24px rgb(0 0 0 / 0.1),
+      0 32px 80px rgb(0 0 0 / 0.16);
+
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    opacity: 0;
+    scale: 0.97;
+    translate: 0 8px;
+    transition:
+      opacity 300ms var(--ease-out),
+      scale 380ms var(--ease-out),
+      translate 380ms var(--ease-out);
+  }
+
+  .panel[data-open] .panel__dialog {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+
+  .panel__close {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: var(--fg);
+    cursor: pointer;
+    opacity: 0.5;
+    transition:
+      opacity 200ms var(--ease-out),
+      background-color 200ms var(--ease-out);
+  }
+
+  .panel__close:hover {
+    opacity: 1;
+    background: color-mix(in oklab, var(--fg) 8%, transparent);
+  }
+
+  .panel__close svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .panel__content[hidden] {
+    display: none;
+  }
+
+  .panel__tint {
+    display: block;
+    width: 3.4rem;
+    height: 0.3rem;
+    margin-bottom: 1.4rem;
+    border-radius: 100px;
+    background: linear-gradient(100deg, var(--tint-from), var(--tint-to));
+  }
+
+  .panel__kind {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+
+  .panel__title {
+    margin-top: 0.5rem;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.7rem, 3.6vw, 2.6rem);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.015em;
+    color: var(--fg-strong);
+  }
+
+  .panel__sub {
+    margin-top: 0.4rem;
+    font-size: 0.94rem;
+    color: var(--fg-mute);
+  }
+
+  .panel__quote {
+    margin-top: 1.6rem;
+    padding-left: 1.1rem;
+    border-left: 2px solid var(--accent);
+  }
+
+  .panel__quote p {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.3rem;
+    font-style: italic;
+    line-height: 1.42;
+    color: var(--fg-strong);
+    text-wrap: pretty;
+  }
+
+  .panel__quote cite {
+    display: block;
+    margin-top: 0.6rem;
+    font-size: 0.86rem;
+    font-style: normal;
+    color: var(--fg-mute);
+  }
+
+  .panel__text {
+    margin-top: 1.4rem;
+    font-size: 1.02rem;
+    line-height: 1.68;
+    text-wrap: pretty;
+    max-width: 34rem;
+  }
+
+  .panel__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.6rem 2.4rem;
+    margin-top: 1.9rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid color-mix(in oklab, var(--fg) 12%, transparent);
+  }
+
+  .panel__meta dt {
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--fg-mute);
+  }
+
+  .panel__meta dd {
+    margin-top: 0.3rem;
+    font-size: 1rem;
+    color: var(--fg-strong);
+  }
+
+  /* ─── Contact ───────────────────────────────────────────── */
+  .panel__contact {
+    margin-top: 1.7rem;
+  }
+
+  .panel__email {
+    display: inline-block;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.2rem, 2.6vw, 1.75rem);
+    color: var(--fg-strong);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 0.1em;
+  }
+
+  .panel__email:hover {
+    color: var(--accent);
+  }
+
+  .panel__socials {
+    list-style: none;
+    display: grid;
+    /* 16rem rather than 11rem: at 11rem this settles into four cramped
+       columns with an orphan on the second row. This holds it at two. */
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0.2rem 2.5rem;
+    margin-top: 1.8rem;
+  }
+
+  .panel__socials a {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid color-mix(in oklab, var(--fg) 10%, transparent);
+    color: inherit;
+    text-decoration: none;
+    transition: border-color 200ms var(--ease-out);
+  }
+
+  .panel__socials a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  .panel__net {
+    color: var(--fg-mute);
+    font-size: 0.9rem;
+  }
+
+  .panel__handle {
+    font-size: 0.9rem;
+    color: var(--fg-strong);
+  }
+
+  /* ─── Links ─────────────────────────────────────────────── */
+  .panel__links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+    margin-top: 2rem;
+  }
+
+  .panel__links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45em;
+    padding: 0.62em 1.1em;
+    border-radius: 100px;
+    background: color-mix(in oklab, var(--accent) 10%, transparent);
+    color: var(--accent);
+    font-size: 0.92rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition: background-color 200ms var(--ease-out);
+  }
+
+  .panel__links a:hover {
+    background: color-mix(in oklab, var(--accent) 20%, transparent);
+  }
+
+  .panel__links svg {
+    width: 0.95em;
+    height: 0.95em;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .panel__backdrop,
+    .panel__dialog {
+      transition: none;
+    }
+
+    .panel__dialog {
+      scale: 1;
+      translate: 0 0;
+    }
+  }
+</style>

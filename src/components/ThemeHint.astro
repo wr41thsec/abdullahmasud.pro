@@ -1,0 +1,66 @@
+---
+// The double-click gesture is invisible, so it gets announced exactly once.
+// The button beside it is the accessible route in — see scripts/theme.ts.
+---
+
+<button class="sr-only" type="button" data-theme-toggle>Switch between light and dark theme</button>
+
+<p class="hint" data-theme-hint aria-hidden="true">double-click anywhere</p>
+
+<style>
+  .hint {
+    position: fixed;
+    left: 50%;
+    bottom: 1.6rem;
+    translate: -50% 0;
+    z-index: 40;
+
+    font-size: 0.68rem;
+    letter-spacing: 0.09em;
+    text-transform: lowercase;
+    color: var(--fg-mute);
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 900ms var(--ease-out);
+  }
+
+  .hint[data-visible='true'] {
+    opacity: 1;
+  }
+
+  .hint::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    margin-right: 0.55em;
+    border-radius: 50%;
+    background: var(--accent);
+    vertical-align: middle;
+    /* Small enough to stay inside the accent budget, moving enough to
+       read as an invitation rather than a label. */
+    animation: pulse 2.6s var(--ease-in-out) infinite;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      opacity: 0.35;
+    }
+    50% {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hint {
+      transition: none;
+    }
+
+    .hint::before {
+      animation: none;
+      opacity: 0.8;
+    }
+  }
+</style>

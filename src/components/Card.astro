@@ -1,0 +1,360 @@
+---
+import type { Card } from '../content/cards';
+
+interface Props {
+  card: Card;
+  index: number;
+}
+
+const { card, index } = Astro.props;
+const [from, to] = card.tint;
+
+// Light text on a dark tint, dark text on a light one. Computed from the
+// tint's perceived luminance rather than hand-set per card, so a new card
+// gets legible text without anyone remembering to check.
+const luminance = (hex: string): number => {
+  const h = hex.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
+  const lin = (c: number) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+  return 0.2126 * lin(r!) + 0.7152 * lin(g!) + 0.0722 * lin(b!);
+};
+const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
+---
+
+<article
+  class="card"
+  class:list={[`card--${card.kind}`, isLight ? 'card--on-light' : 'card--on-dark']}
+  style={`--i: ${index}; --tint-from: ${from}; --tint-to: ${to};`}
+  data-card={card.id}
+  data-index={index}
+>
+  <button class="card__hit" type="button" aria-label={`Open ${card.title}`} data-open={card.id}>
+    {
+      card.media?.type === 'video' && (
+        <video
+          class="card__media"
+          src={card.media.src}
+          poster={card.media.poster}
+          muted
+          loop
+          playsinline
+          preload="none"
+          aria-hidden="true"
+          tabindex="-1"
+        />
+      )
+    }
+    {
+      card.media?.type === 'image' && (
+        <img
+          class="card__media"
+          src={card.media.src}
+          alt={card.media.alt ?? ''}
+          loading="lazy"
+          decoding="async"
+        />
+      )
+    }
+
+    {
+      card.kind === 'quote' && card.quote && (
+        <blockquote class="card__quote">
+          <p>{card.quote.text}</p>
+          {card.quote.attribution && <cite>{card.quote.attribution}</cite>}
+        </blockquote>
+      )
+    }
+
+    {
+      card.kind === 'contact' && card.contact && (
+        <div class="card__contact">
+          <span class="card__contact-label">Get in touch</span>
+          <span class="card__contact-email">{card.contact.email}</span>
+          <ul class="card__contact-socials">
+            {card.contact.socials.map((s) => (
+              <li>
+                <span class="card__contact-net">{s.label}</span>
+                <span class="card__contact-handle">{s.handle}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )
+    }
+
+    {
+      card.kind !== 'quote' && card.kind !== 'contact' && (
+        <div class="card__label">
+          <span class="card__kind">{card.kind}</span>
+          <span class="card__title">{card.title}</span>
+          {card.subtitle && <span class="card__sub">{card.subtitle}</span>}
+        </div>
+      )
+    }
+  </button>
+</article>
+
+<style>
+  .card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: var(--card-w);
+    height: var(--card-h);
+
+    /* Centre the card on the ring origin, so `rotate()` pivots about the
+       card's own middle and `translateY(-R)` then throws it out to the rim. */
+    margin-left: calc(var(--card-w) / -2);
+    margin-top: calc(var(--card-h) / -2);
+
+    /* The one transform that does all the work: rotate to the card's angle,
+       then push it out along that now-rotated axis. Two operations place it
+       on the circle AND turn it tangentially — no per-frame trigonometry.
+       `--angle` is the only thing JS writes; `--card-pop` and `--card-scale`
+       are CSS-owned hover state (see the @property block in global.css).
+       Because the pop is applied along the already-rotated Y axis, a hovered
+       card lifts radially outward from the ring rather than screen-upward. */
+    transform: rotate(calc(var(--angle, 0) * 1deg))
+      translateY(calc(-1 * var(--arc-radius) - var(--card-pop)))
+      scale(var(--card-scale));
+
+    border-radius: var(--card-radius);
+    background: linear-gradient(150deg, var(--tint-from) 0%, var(--tint-to) 100%);
+    box-shadow: var(--card-shadow);
+    outline: 1px solid var(--card-rim);
+    outline-offset: -1px;
+
+    overflow: hidden;
+    will-change: transform;
+    backface-visibility: hidden;
+    contain: paint;
+  }
+
+  /* Cards well outside the visible wedge stop painting. They keep their
+     layout slot, so this costs nothing to maintain. */
+  .card[data-offstage='true'] {
+    visibility: hidden;
+  }
+
+  .card__hit {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    text-align: left;
+    color: inherit;
+    font: inherit;
+  }
+
+  .card__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    /* Media sits under the label, which has its own scrim. */
+    z-index: 0;
+  }
+
+  /* ─── Label (business / product / idea) ─────────────────── */
+  .card__label {
+    position: absolute;
+    inset: auto 0 0 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.15em;
+    padding: 1.4em 1.2em 1.3em;
+    font-size: clamp(0.6rem, 1.02vw, 1.05rem);
+  }
+
+  /* A scrim only where there is media to fight — a gradient card is
+     already controlled, and stacking a scrim on it muddies the colour. */
+  .card:has(.card__media) .card__label::before {
+    content: '';
+    position: absolute;
+    inset: -60% 0 0 0;
+    background: linear-gradient(to top, rgb(0 0 0 / 0.62), transparent);
+    z-index: -1;
+  }
+
+  .card__kind {
+    font-size: 0.62em;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.65;
+  }
+
+  .card__title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.55em;
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.01em;
+  }
+
+  .card__sub {
+    font-size: 0.78em;
+    opacity: 0.72;
+  }
+
+  /* ─── Quote ─────────────────────────────────────────────── */
+  .card__quote {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.9em;
+    padding: 1.6em 1.4em;
+    font-size: clamp(0.6rem, 1.02vw, 1.05rem);
+  }
+
+  .card__quote p {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.3em;
+    font-weight: 500;
+    font-style: italic;
+    line-height: 1.34;
+    text-wrap: pretty;
+  }
+
+  .card__quote p::before {
+    content: '\201C';
+  }
+
+  .card__quote p::after {
+    content: '\201D';
+  }
+
+  .card__quote cite {
+    font-size: 0.76em;
+    font-style: normal;
+    opacity: 0.66;
+  }
+
+  /* ─── Contact ───────────────────────────────────────────── */
+  .card__contact {
+    position: relative;
+    z-index: 1;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.8em;
+    padding: 1.5em 1.3em;
+    font-size: clamp(0.6rem, 1.02vw, 1.05rem);
+  }
+
+  .card__contact-label {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.45em;
+    font-weight: 500;
+    line-height: 1.1;
+  }
+
+  .card__contact-email {
+    font-size: 0.84em;
+    word-break: break-all;
+    opacity: 0.9;
+    border-bottom: 1px solid currentcolor;
+    padding-bottom: 0.7em;
+  }
+
+  .card__contact-socials {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.42em;
+    font-size: 0.8em;
+  }
+
+  .card__contact-socials li {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.6em;
+  }
+
+  .card__contact-net {
+    opacity: 0.6;
+  }
+
+  .card__contact-handle {
+    opacity: 0.95;
+  }
+
+  /* ─── Text colour, derived from tint luminance ──────────── */
+  .card--on-dark {
+    color: #f7f7f8;
+  }
+
+  .card--on-light {
+    color: #1b1b1e;
+  }
+
+  /* Media cards always carry a scrim, so light type is correct
+     regardless of what the tint underneath happens to be. */
+  .card:has(.card__media) {
+    color: #f7f7f8;
+  }
+
+  /* ─── Hover ─────────────────────────────────────────────── */
+  /* Lift only. The rotation is never touched — feedback that the card is
+     clickable, without interrupting the drift. */
+  .card {
+    transition:
+      --card-pop 280ms var(--ease-out),
+      --card-scale 280ms var(--ease-out),
+      box-shadow 260ms var(--ease-out),
+      outline-color 260ms var(--ease-out);
+  }
+
+  .card__hit::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 0 var(--accent);
+    transition: box-shadow 220ms var(--ease-out);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .card:hover .card__hit::after {
+      box-shadow: inset 0 0 0 1.5px var(--accent);
+    }
+
+    .card:hover,
+    .card:focus-within {
+      --card-pop: 10px;
+      --card-scale: 1.028;
+      box-shadow:
+        var(--card-shadow),
+        0 10px 40px color-mix(in oklab, var(--accent) 22%, transparent);
+    }
+  }
+
+  /* Keyboard users get the same lift without needing a pointer. */
+  .card:focus-within {
+    --card-pop: 10px;
+    --card-scale: 1.028;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card {
+      transition: box-shadow 260ms var(--ease-out);
+    }
+  }
+
+  .card__hit:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: -4px;
+    border-radius: var(--card-radius);
+  }
+</style>
