@@ -1,0 +1,165 @@
+@import 'tailwindcss';
+
+/* ───────────────────────────────────────────────────────────────
+   Design tokens
+   Light is the video-accurate default: pure white, warm-grey type.
+   Dark is not an inversion — card art is untouched, but shadows
+   flip to an accent-tinted rim, because a drop shadow on near-black
+   is invisible.
+   ─────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --bg: #ffffff;
+  --fg: #3a3a3a;
+  --fg-strong: #1c1c1e;
+  --fg-mute: #8b8b90;
+  --accent: #8e43e7;
+
+  /* The hub disc tracks the background. This one line is what makes
+     the arc edge work in both themes with no extra code. */
+  --hub: var(--bg);
+
+  --card-shadow:
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px rgb(0 0 0 / 0.08),
+    0 24px 48px rgb(0 0 0 / 0.06);
+  --card-rim: transparent;
+
+  /* Arc geometry — measured from the reference clip.
+     R ≈ 1.43 × viewport width, 7.2° per card, cards at 0.645 aspect. */
+  --arc-radius: 143vw;
+  --card-w: 18vw;
+  --card-aspect: 0.645;
+  --arc-step: 7.2deg;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #0a0a0c;
+  --fg: #ededf0;
+  --fg-strong: #ffffff;
+  --fg-mute: #74747c;
+  /* Lifted from #8e43e7 — the source purple doesn't hold contrast on near-black. */
+  --accent: #a366f0;
+
+  --card-shadow:
+    0 1px 2px rgb(0 0 0 / 0.5),
+    0 8px 32px rgb(0 0 0 / 0.55);
+  --card-rim: rgb(255 255 255 / 0.07);
+}
+
+/* ─── Fonts ─────────────────────────────────────────────────────
+   Both are variable fonts, latin subset only — one file per family
+   covers every weight, so there are two font requests total (71KB).
+   Self-hosted rather than served from the Google Fonts CDN: it drops
+   a third-party connection from the critical path.
+   ─────────────────────────────────────────────────────────────── */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('/fonts/playfair-latin-var.woff2') format('woff2-variations');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122;
+}
+
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/inter-latin-var.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+2000-206F, U+2122;
+}
+
+/* ─── Base ──────────────────────────────────────────────────── */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  /* The stage is exactly the viewport. Nothing scrolls: the arc is
+     positioned against viewport height, so a scrollbar would shift
+     the whole ring. */
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+
+  /* Double-click toggles the theme, so kill the text selection that
+     a double-click would otherwise leave behind. */
+  user-select: none;
+  -webkit-user-select: none;
+
+  transition:
+    background-color 420ms var(--ease-in-out),
+    color 420ms var(--ease-in-out);
+}
+
+/* Theme transition is a nicety, not something to inflict on people
+   who asked for less motion. */
+@media (prefers-reduced-motion: reduce) {
+  body {
+    transition: none;
+  }
+}
+
+/* ─── Focus ─────────────────────────────────────────────────── */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Screen-reader-only, but still focusable — used for the theme
+   toggle, which has no keyboard equivalent as a double-click. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only:focus-visible {
+  position: fixed;
+  top: 1rem;
+  left: 50%;
+  translate: -50% 0;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 0.5rem 1rem;
+  clip-path: none;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  font-size: 0.8rem;
+  z-index: 100;
+}

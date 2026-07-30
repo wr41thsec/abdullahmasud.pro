@@ -1,0 +1,30 @@
+# dependencies & build output
+node_modules/
+dist/
+.astro/
+
+# environment / secrets — nothing here should ever be committed
+.env
+.env.*
+*.pem
+*.key
+*.p12
+*.keystore
+secrets.json
+.npmrc
+
+# documentation lives outside this repo by design
+*.md
+!public/**/*.md
+
+# reference material — third-party copyrighted video, never commit
+*.mp4
+*.mov
+
+# os / editor noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+npm-debug.log*

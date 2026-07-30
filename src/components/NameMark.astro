@@ -1,0 +1,44 @@
+---
+interface Props {
+  name: string;
+}
+
+const { name } = Astro.props;
+---
+
+<h1 class="name">{name}</h1>
+
+<style>
+  .name {
+    position: relative;
+    z-index: 30;
+    padding-top: clamp(1.75rem, 5vh, 3.5rem);
+    text-align: center;
+
+    font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+    font-weight: 500;
+    font-size: clamp(2.1rem, 6vw, 5.25rem);
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--fg-strong);
+
+    /* Playfair's sidebearings make a mathematically centred line read
+       very slightly right-heavy. This is the optical correction. */
+    translate: -0.01em 0;
+
+    /* The accent, spent as a bloom rather than a colour. Two layers:
+       a tight 1px seat that reads as weight, and a wide soft halo that
+       only registers peripherally. The word itself stays --fg-strong. */
+    text-shadow:
+      0 1px 0 color-mix(in oklab, var(--accent) 18%, transparent),
+      0 4px 24px color-mix(in oklab, var(--accent) 22%, transparent);
+  }
+
+  :root[data-theme='dark'] .name {
+    /* On near-black the halo needs more reach to register at all, but
+       the tight seat needs less — it would otherwise read as a fringe. */
+    text-shadow:
+      0 1px 0 color-mix(in oklab, var(--accent) 12%, transparent),
+      0 6px 34px color-mix(in oklab, var(--accent) 30%, transparent);
+  }
+</style>
