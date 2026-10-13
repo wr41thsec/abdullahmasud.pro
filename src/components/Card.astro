@@ -155,6 +155,8 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
     width: 100%;
     height: 100%;
     object-fit: cover;
+    /* A native image drag would steal the pointer from the carousel's drag. */
+    -webkit-user-drag: none;
     /* Media sits under the label, which has its own scrim. */
     z-index: 0;
   }

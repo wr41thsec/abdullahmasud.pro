@@ -166,10 +166,8 @@ export const cards: Card[] = [
       // PLACEHOLDER — swap for the address you actually want public.
       email: 'hello@abdullahmasud.pro',
       socials: [
-        { label: 'X', handle: '@handle', href: 'https://x.com/handle' },
-        { label: 'LinkedIn', handle: '/in/handle', href: 'https://linkedin.com/in/handle' },
-        { label: 'GitHub', handle: '@handle', href: 'https://github.com/handle' },
-        { label: 'Instagram', handle: '@handle', href: 'https://instagram.com/handle' },
+        { label: 'X', handle: '@phsycrow', href: 'https://x.com/phsycrow' },
+        { label: 'GitHub', handle: '@wr41thsec', href: 'https://github.com/wr41thsec' },
       ],
     },
     detail: {

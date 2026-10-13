@@ -17,6 +17,13 @@ import { cards } from '../content/cards';
     /* The ring is far wider than the viewport; this is what trims it. */
     overflow: hidden;
 
+    /* Horizontal gestures belong to the carousel (see arc.ts); vertical ones
+       stay with the browser. Selection is off so a drag can't highlight text. */
+    touch-action: pan-y;
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: grab;
+
     /* ─── Arc geometry ────────────────────────────────────────
        All of it declared here, on the element the media queries below
        override, so `--card-h` re-derives per breakpoint.
@@ -42,6 +49,10 @@ import { cards } from '../content/cards';
     /* Vertical position of the card centres, as a share of viewport height.
        The ring centre is this plus the radius, far below the fold. */
     --arc-y: 51%;
+  }
+
+  .arc[data-dragging='true'] {
+    cursor: grabbing;
   }
 
   .arc__ring {
