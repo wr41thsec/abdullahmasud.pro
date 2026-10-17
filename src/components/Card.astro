@@ -19,6 +19,14 @@ const luminance = (hex: string): number => {
   return 0.2126 * lin(r!) + 0.7152 * lin(g!) + 0.0722 * lin(b!);
 };
 const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
+
+// A card with `href` is a plain link out; every other card opens the panel.
+const Hit = card.href ? 'a' : 'button';
+const hitProps = card.href
+  ? { href: card.href, 'aria-label': `Visit ${card.title}` }
+  : { type: 'button' as const, 'data-open': card.id, 'aria-label': `Open ${card.title}` };
+const brandStyle = (ground?: string, ink?: string) =>
+  [ground && `--brand-ground: ${ground};`, ink && `--brand-ink: ${ink};`].filter(Boolean).join(' ');
 ---
 
 <article
@@ -28,7 +36,7 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
   data-card={card.id}
   data-index={index}
 >
-  <button class="card__hit" type="button" aria-label={`Open ${card.title}`} data-open={card.id}>
+  <Hit class="card__hit" {...hitProps}>
     {
       card.media?.type === 'video' && (
         <video
@@ -69,7 +77,7 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
       card.kind === 'contact' && card.contact && (
         <div class="card__contact">
           <span class="card__contact-label">Get in touch</span>
-          <span class="card__contact-email">{card.contact.email}</span>
+          {card.contact.email && <span class="card__contact-email">{card.contact.email}</span>}
           <ul class="card__contact-socials">
             {card.contact.socials.map((s) => (
               <li>
@@ -83,7 +91,31 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
     }
 
     {
-      card.kind !== 'quote' && card.kind !== 'contact' && (
+      card.brands && (
+        <div class:list={['card__brands', card.brands.length === 1 && 'card__brands--single']}>
+          {card.brands.map((b) => (
+            <div class="card__brand" style={brandStyle(b.ground, b.ink)}>
+              {/* One brand gets the whole card, so its mark also echoes huge
+                  and faint behind itself, like a doorway seen through a doorway. */}
+              {card.brands!.length === 1 && (
+                <img class="card__brand-ghost" src={b.logo} alt="" aria-hidden="true" />
+              )}
+              <img class="card__brand-logo" src={b.logo} alt="" />
+              <span class="card__brand-name">{b.name}</span>
+              {b.caption && <span class="card__brand-caption">{b.caption}</span>}
+              {card.href && card.brands!.length === 1 && (
+                <span class="card__brand-go" aria-hidden="true">
+                  {new URL(card.href).host.replace(/^www\./, '')} ↗
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      card.kind !== 'quote' && card.kind !== 'contact' && !card.brands && (
         <div class="card__label">
           <span class="card__kind">{card.kind}</span>
           <span class="card__title">{card.title}</span>
@@ -91,7 +123,7 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
         </div>
       )
     }
-  </button>
+  </Hit>
 </article>
 
 <style>
@@ -147,6 +179,106 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
     text-align: left;
     color: inherit;
     font: inherit;
+    text-decoration: none;
+  }
+
+  /* ─── Brand (logo-led) ──────────────────────────────────── */
+  .card__brands {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card__brand {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9em;
+    padding: 1.2em;
+    overflow: hidden;
+    background: var(--brand-ground, transparent);
+    color: var(--brand-ink, inherit);
+    font-size: clamp(0.6rem, 1.02vw, 1.05rem);
+    text-align: center;
+  }
+
+  .card__brand-logo {
+    position: relative;
+    height: 4.6em;
+    width: auto;
+    -webkit-user-drag: none;
+  }
+
+  .card__brand-name {
+    position: relative;
+    font-size: 0.78em;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+
+  /* One brand: the mark carries the card. */
+  .card__brands--single .card__brand {
+    gap: 0.5em;
+    padding-bottom: 3.2em;
+  }
+
+  /* A soft light behind the mark, so it sits in the card rather than on it. */
+  .card__brands--single .card__brand::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(70% 42% at 50% 40%, rgb(255 255 255 / 0.2), transparent 72%);
+    pointer-events: none;
+  }
+
+  .card__brands--single .card__brand-logo {
+    height: 6.8em;
+    max-width: 62%;
+    margin-bottom: 1.1em;
+    filter: drop-shadow(0 0.6em 1.4em rgb(0 0 0 / 0.18));
+  }
+
+  .card__brands--single .card__brand-name {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: 1.75em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    text-transform: none;
+  }
+
+  .card__brand-caption {
+    position: relative;
+    font-size: 0.8em;
+    opacity: 0.8;
+  }
+
+  .card__brand-ghost {
+    position: absolute;
+    left: 50%;
+    bottom: -34%;
+    width: 175%;
+    max-width: none;
+    translate: -50% 0;
+    opacity: 0.09;
+    pointer-events: none;
+    -webkit-user-drag: none;
+  }
+
+  .card__brand-go {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.3em;
+    font-size: 0.68em;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    opacity: 0.85;
   }
 
   .card__media {
@@ -276,9 +408,13 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
     font-size: 0.8em;
   }
 
+  /* Label and handle sit side by side, not at opposite edges: the card is
+     always tilted on the arc, and across a full card width that tilt drops
+     the right-hand column a whole row, pairing each handle with the wrong
+     network. */
   .card__contact-socials li {
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: 5em minmax(0, 1fr);
     gap: 0.6em;
   }
 
@@ -288,6 +424,9 @@ const isLight = (luminance(from) + luminance(to)) / 2 > 0.42;
 
   .card__contact-handle {
     opacity: 0.95;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ─── Text colour, derived from tint luminance ──────────── */

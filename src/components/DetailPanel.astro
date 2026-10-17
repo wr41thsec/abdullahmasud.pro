@@ -20,7 +20,7 @@ import { cards } from '../content/cards';
 
     <div class="panel__body">
       {
-        cards.map((card) => (
+        cards.filter((card) => !card.href).map((card) => (
           <section class="panel__content" data-panel-for={card.id} hidden>
             {/* Carries the card's own tint into the panel, so the connection
                 between what was clicked and what opened is explicit. Inline
@@ -57,9 +57,11 @@ import { cards } from '../content/cards';
 
             {card.contact && (
               <div class="panel__contact">
-                <a class="panel__email" href={`mailto:${card.contact.email}`}>
-                  {card.contact.email}
-                </a>
+                {card.contact.email && (
+                  <a class="panel__email" href={`mailto:${card.contact.email}`}>
+                    {card.contact.email}
+                  </a>
+                )}
                 <ul class="panel__socials">
                   {card.contact.socials.map((s) => (
                     <li>

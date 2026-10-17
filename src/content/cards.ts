@@ -28,6 +28,18 @@ export interface CardDetail {
   links?: { label: string; href: string }[];
 }
 
+/** A logo-led panel on a card. Two brands split the card top and bottom. */
+export interface Brand {
+  name: string;
+  /** Path under /media — a mark that reads on `ground`. */
+  logo: string;
+  caption?: string;
+  /** Background behind this brand; the card's tint shows through if unset. */
+  ground?: string;
+  /** Text colour on `ground`. */
+  ink?: string;
+}
+
 export interface SocialLink {
   label: string;
   handle: string;
@@ -45,7 +57,11 @@ export interface Card {
   /** Set when kind is 'quote'. */
   quote?: { text: string; attribution?: string };
   /** Set when kind is 'contact'. */
-  contact?: { email: string; socials: SocialLink[] };
+  contact?: { email?: string; socials: SocialLink[] };
+  /** Logo-led layout instead of the title label. */
+  brands?: Brand[];
+  /** Clicking goes straight to this URL instead of opening the detail panel. */
+  href?: string;
   detail?: CardDetail;
 }
 
@@ -56,31 +72,36 @@ export interface Card {
  */
 export const cards: Card[] = [
   {
-    id: 'venture-one',
+    id: 'wuslahq',
     kind: 'business',
-    title: 'Venture One',
-    subtitle: 'Founded 2021',
-    tint: ['#1d9bb8', '#e8622a'],
-    detail: {
-      body: 'Replace this with what the business does, who it serves, and what stage it is at. Two or three sentences is the right length — the arc is a doorway, not a case study.',
-      meta: [
-        { label: 'Role', value: 'Founder' },
-        { label: 'Year', value: '2021' },
-      ],
-      links: [{ label: 'Visit site', href: 'https://example.com' }],
-    },
+    title: 'WuslaHQ',
+    subtitle: 'The fair API marketplace',
+    tint: ['#f0411e', '#c42d0f'],
+    href: 'https://wuslahq.com/',
+    brands: [
+      {
+        name: 'WuslaHQ',
+        logo: '/media/wuslahq-mark.svg',
+        caption: 'The fair API marketplace',
+        ink: '#fbf9f4',
+      },
+    ],
   },
   {
-    id: 'venture-two',
+    id: 'companies',
     kind: 'business',
-    title: 'Venture Two',
-    subtitle: 'Operating',
-    tint: ['#16362a', '#3f7d5f'],
+    title: 'StockFlow & Insignia Sec',
+    subtitle: 'My companies',
+    tint: ['#262626', '#f4f1ea'],
+    brands: [
+      { name: 'StockFlow', logo: '/media/stockflow-mark.svg', ground: '#262626', ink: '#f4f1ea' },
+      { name: 'Insignia Sec', logo: '/media/insignia-sec-mark.svg', ground: '#f4f1ea', ink: '#031130' },
+    ],
     detail: {
-      body: 'A second business. Same shape as the first — swap the copy and the tint, or drop in a clip once you have one.',
+      body: 'The two companies I run.',
       meta: [
-        { label: 'Role', value: 'Co-founder' },
-        { label: 'Year', value: '2022' },
+        { label: 'StockFlow', value: 'Offline-first inventory and sales for shops in Bangladesh' },
+        { label: 'Insignia Sec', value: 'Practical cybersecurity for solopreneurs, Dubai' },
       ],
     },
   },
@@ -163,10 +184,18 @@ export const cards: Card[] = [
     title: 'Get in touch',
     tint: ['#0f0f12', '#3a3a44'],
     contact: {
-      // PLACEHOLDER — swap for the address you actually want public.
-      email: 'hello@abdullahmasud.pro',
       socials: [
         { label: 'X', handle: '@phsycrow', href: 'https://x.com/phsycrow' },
+        {
+          label: 'Threads',
+          handle: '@abdullahalmasouud',
+          href: 'https://www.threads.com/@abdullahalmasouud',
+        },
+        {
+          label: 'Facebook',
+          handle: 'abdullahalmasouud',
+          href: 'https://www.facebook.com/abdullahalmasouud/',
+        },
         { label: 'GitHub', handle: '@wr41thsec', href: 'https://github.com/wr41thsec' },
       ],
     },
